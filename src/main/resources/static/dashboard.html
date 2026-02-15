@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard - Sistema Tickets</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">🎫 TicketSystem</a>
+            <div class="d-flex">
+                <span class="navbar-text text-white me-3">
+                    Hola, <strong id="navUser">Cargando...</strong>
+                </span>
+                <button id="btnLogout" class="btn btn-outline-danger btn-sm">Cerrar Sesión</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        
+        <div class="card shadow mb-4">
+            <div class="card-header bg-primary text-white">
+                <h3>Panel de Control</h3>
+            </div>
+            <div class="card-body">
+                <h5 class="card-title">Información del Usuario (Traída de BD)</h5>
+                <p class="card-text text-muted">Datos recuperados de PostgreSQL al iniciar sesión.</p>
+                
+                <ul class="list-group list-group-horizontal-md">
+                    <li class="list-group-item flex-fill"><strong>UID:</strong> <span id="lblUid">...</span></li>
+                    <li class="list-group-item flex-fill"><strong>Nombre:</strong> <span id="lblName">...</span></li>
+                    <li class="list-group-item flex-fill"><strong>Email:</strong> <span id="lblEmail">...</span></li>
+                    <li class="list-group-item flex-fill"><strong>Rol:</strong> <span class="badge bg-secondary" id="lblRole">...</span></li>
+                </ul>
+            </div>
+        </div>
+
+        <div id="userSection" class="card shadow mb-4 border-success" style="display:none;">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">📝 Nuevo Reporte</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Asunto / Título</label>
+                        <input type="text" id="tkTitle" class="form-control" placeholder="Ej: No conecta el WiFi">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Prioridad</label>
+                        <select id="tkPriority" class="form-select">
+                            <option value="BAJA">Baja</option>
+                            <option value="MEDIA" selected>Media</option>
+                            <option value="ALTA">Alta</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Categoría</label>
+                        <select id="tkCategory" class="form-select">
+                            <option value="SOPORTE">Soporte General</option>
+                            <option value="HARDWARE">Hardware / Equipos</option>
+                            <option value="SOFTWARE">Software / Programas</option>
+                            <option value="REDES">Redes / Internet</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Descripción Detallada</label>
+                        <textarea id="tkDesc" class="form-control" rows="2" placeholder="Explica qué pasó..."></textarea>
+                    </div>
+                    <div class="col-12 text-end">
+                        <button id="btnCreateTicket" class="btn btn-success px-4">🚀 Enviar Ticket</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 text-primary" id="tableTitle">Listado de Tickets</h5>
+                <button class="btn btn-sm btn-outline-secondary" onclick="location.reload()">🔄 Refrescar</button>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover mb-0 align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#ID</th>
+                                <th>Asunto & Categoría</th>
+                                <th>Prioridad</th>
+                                <th>Estado</th>
+                                <th>Asignado A</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ticketsTableBody">
+                            <tr><td colspan="6" class="text-center p-3">Cargando tickets...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // ---------------------------------------------------------
+            // 1. VALIDACIÓN DE SESIÓN (Tu lógica original)
+            // ---------------------------------------------------------
+            var usuarioString = localStorage.getItem("usuarioLogueado");
+
+            if (!usuarioString) {
+                alert("No has iniciado sesión.");
+                window.location.href = "/login.html";
+                return; // Detenemos el script
+            }
+
+            var usuario = JSON.parse(usuarioString);
+
+            // Mostrar datos en el HTML
+            $("#navUser").text(usuario.name);
+            $("#lblUid").text(usuario.uid);
+            $("#lblName").text(usuario.name);
+            $("#lblEmail").text(usuario.email);
+            
+            // Colorear el badge del rol
+            var badgeColor = usuario.role === "ADMIN" ? "danger" : (usuario.role === "AGENT" ? "warning text-dark" : "success");
+            $("#lblRole").text(usuario.role).removeClass("bg-secondary").addClass("bg-" + badgeColor);
+
+
+            // ---------------------------------------------------------
+            // 2. LÓGICA DE INTERFAZ SEGÚN ROL
+            // ---------------------------------------------------------
+            if (usuario.role === "USER") {
+                $("#userSection").slideDown(); // El usuario puede crear tickets
+                $("#tableTitle").text("📂 Mis Tickets Reportados");
+            } else if (usuario.role === "AGENT") {
+                $("#tableTitle").text("🔧 Bandeja de Entrada (Asignados a mí)");
+            } else {
+                $("#tableTitle").text("🛡️ Panel de Administración (Vista Global)");
+            }
+
+            // Cargar la tabla inmediatamente
+            cargarTickets();
+
+
+            // ---------------------------------------------------------
+            // 3. FUNCIÓN: CARGAR TICKETS (GET)
+            // ---------------------------------------------------------
+            function cargarTickets() {
+                $.ajax({
+                    url: "/api/tickets/list?uid=" + usuario.uid,
+                    type: "GET",
+                    success: function(tickets) {
+                        var html = "";
+                        
+                        if (tickets.length === 0) {
+                            html = '<tr><td colspan="6" class="text-center text-muted p-4">No hay tickets para mostrar.</td></tr>';
+                        } else {
+                            tickets.forEach(function(t) {
+                                // Formatear nombre del agente
+                                var agenteInfo = t.assignedTo ? 
+                                    `<span class="fw-bold text-dark">${t.assignedTo.name}</span>` : 
+                                    `<span class="badge bg-warning text-dark">Pendiente</span>`;
+
+                                // Botón de acción (Solo Agentes/Admin pueden cerrar)
+                                var btnAction = "";
+                                if ((usuario.role === "AGENT" || usuario.role === "ADMIN") && t.status !== "CERRADO") {
+                                    btnAction = `<button class="btn btn-sm btn-outline-success" onclick="cerrarTicket(${t.id})">✅ Resolver</button>`;
+                                } else if (t.status === "CERRADO") {
+                                    btnAction = `<span class="text-muted small">Finalizado</span>`;
+                                } else {
+                                    btnAction = `<span class="text-muted small">Esperando...</span>`;
+                                }
+
+                                html += `
+                                    <tr>
+                                        <td><strong>#${t.id}</strong></td>
+                                        <td>
+                                            <div class="fw-bold">${t.title}</div>
+                                            <small class="text-muted">${t.category || 'General'}</small>
+                                        </td>
+                                        <td><span class="badge bg-${getPriorityColor(t.priority)}">${t.priority}</span></td>
+                                        <td><span class="badge bg-${getStatusColor(t.status)}">${t.status}</span></td>
+                                        <td>${agenteInfo}</td>
+                                        <td>${btnAction}</td>
+                                    </tr>
+                                `;
+                            });
+                        }
+                        $("#ticketsTableBody").html(html);
+                    },
+                    error: function(err) {
+                        console.error("Error cargando tickets", err);
+                        $("#ticketsTableBody").html('<tr><td colspan="6" class="text-center text-danger">Error al conectar con el servidor.</td></tr>');
+                    }
+                });
+            }
+
+
+            // ---------------------------------------------------------
+            // 4. FUNCIÓN: CREAR TICKET (POST)
+            // ---------------------------------------------------------
+            $("#btnCreateTicket").click(function() {
+                var titulo = $("#tkTitle").val();
+                var desc = $("#tkDesc").val();
+                
+                if(titulo.trim() === "" || desc.trim() === "") {
+                    alert("Por favor completa el Asunto y la Descripción.");
+                    return;
+                }
+
+                var dataTicket = {
+                    title: titulo,
+                    description: desc,
+                    priority: $("#tkPriority").val(),
+                    category: $("#tkCategory").val(),
+                    creatorUid: usuario.uid // Importante: enviamos quién lo crea
+                };
+
+                // Deshabilitar botón para evitar doble click
+                var btn = $(this);
+                btn.prop("disabled", true).text("Enviando...");
+
+                $.ajax({
+                    url: '/api/tickets/create',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(dataTicket),
+                    success: function(response) {
+                        alert("✅ Ticket creado correctamente.\nID: " + response.id);
+                        
+                        // Limpiar formulario
+                        $("#tkTitle").val("");
+                        $("#tkDesc").val("");
+                        
+                        // Recargar tabla
+                        cargarTickets();
+                    },
+                    error: function(xhr) {
+                        alert("❌ Error al crear ticket: " + (xhr.responseText || "Error desconocido"));
+                    },
+                    complete: function() {
+                        btn.prop("disabled", false).text("🚀 Enviar Ticket");
+                    }
+                });
+            });
+
+
+            // ---------------------------------------------------------
+            // 5. FUNCIONES AUXILIARES (Colores)
+            // ---------------------------------------------------------
+            window.getPriorityColor = function(p) {
+                if (p === 'ALTA') return 'danger';
+                if (p === 'MEDIA') return 'primary';
+                return 'info'; // BAJA
+            };
+
+            window.getStatusColor = function(s) {
+                if (s === 'ASIGNADO' || s === 'ABIERTO') return 'warning text-dark';
+                if (s === 'CERRADO' || s === 'RESUELTO') return 'secondary';
+                return 'success';
+            };
+
+
+            // ---------------------------------------------------------
+            // 6. FUNCIÓN GLOBAL: CERRAR TICKET
+            // ---------------------------------------------------------
+            window.cerrarTicket = function(id) {
+                if (!confirm("¿Estás seguro de marcar este ticket como CERRADO?")) return;
+
+                $.ajax({
+                    url: '/api/tickets/' + id + '/update-status',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ status: "CERRADO" }),
+                    success: function() {
+                        cargarTickets(); // Recargar la tabla para ver el cambio
+                    },
+                    error: function() {
+                        alert("Error al actualizar el estado del ticket.");
+                    }
+                });
+            };
+
+
+            // ---------------------------------------------------------
+            // 7. LOGOUT
+            // ---------------------------------------------------------
+            $("#btnLogout").click(function() {
+                localStorage.removeItem("usuarioLogueado");
+                window.location.href = "/login.html";
+            });
+        });
+    </script>
+</body>
+</html>

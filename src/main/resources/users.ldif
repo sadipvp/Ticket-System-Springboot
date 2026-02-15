@@ -1,0 +1,45 @@
+dn: dc=miempresa,dc=com
+objectClass: top
+objectClass: domain
+dc: miempresa
+
+dn: ou=people,dc=miempresa,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: people
+
+# Usuario con rol de USUARIO
+dn: uid=jperez,ou=people,dc=miempresa,dc=com
+objectClass: top
+objectClass: person
+objectClass: inetOrgPerson
+cn: Juan Perez
+sn: Perez
+uid: jperez
+userPassword: 123
+description: ROLE_USER
+
+
+
+# Usuario con rol de AGENTE
+dn: uid=agent1, ou= people, dc=miempresa,dc=com
+objectClass: top
+objectClass: person
+objectClass: inetOrgPerson
+cn: Agente 1
+sn: 1
+uid: agent1
+userPassword: 123
+description: ROLE_AGENT
+
+
+# Usuario con rol de ADMIN
+dn: uid=admin,ou=people,dc=miempresa,dc=com
+objectClass: top
+objectClass: person
+objectClass: inetOrgPerson
+cn: Admin
+sn: Admin
+uid: admin
+userPassword: admin
+description: ROLE_ADMIN

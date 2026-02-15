@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Registro</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"
+      crossorigin="anonymous"
+    />
+  </head>
+  <body class="bg-info d-flex justify-content-center align-items-center vh-100">
+    <div
+      class="bg-white p-5 rounded-5 text-secondary shadow-sm"
+      style="width: 25rem"
+    >
+      <div class="d-flex justify-content-center">
+        <img
+          src="assets/register-svg-icon.svg"
+          alt="register-svg-icon"
+          style="width: 7rem"
+        />
+      </div>
+      <div class="text-center fs-2 fw-bold mt-3 mb-4">Registro</div>
+      <div class="row g-2 mb-3">
+        <div class="col">
+          <input
+            id="nombre"
+            class="form-control bg-white shadow-sm"
+            type="text"
+            placeholder="Nombres"
+          />
+        </div>
+        <div class="col">
+          <input
+            id="apellidos"
+            class="form-control bg-white shadow-sm"
+            type="text"
+            placeholder="Apellidos"
+          />
+        </div>
+
+        <div class="mb-1">
+          <input
+            id="email"
+            class="form-control bg-white shadow-sm"
+            type="text"
+            placeholder="Email"
+          />
+        </div>
+        <div class="mb-1">
+          <input
+            id="contraseña"
+            class="form-control bg-white shadow-sm"
+            type="text"
+            placeholder="Contraseña"
+          />
+        </div>
+        <div class="mb-1">
+          <input
+            id="contraseña_repetida"
+            class="form-control bg-white shadow-sm"
+            type="text"
+            placeholder="Repetir Contraseña"
+          />
+        </div>
+      </div>
+      <div class="form-check mb-4">
+        <input
+          id="recordarme"
+          type="checkbox"
+          class="form-check-input"
+          id="flexCheckDefault"
+        />
+        <label
+          class="form-check-label"
+          style="font-size: 0.9"
+          for="flexCheckDefault"
+          >Remenber me</label
+        >
+      </div>
+
+      <div class="d-grid gap-2 mb-4">
+        <button id="btn-registrar" class="btn btn-info text-white fw-bold">
+          Registrar
+        </button>
+      </div>
+      <div class="text-center text-muted">
+        <span>you already have an acoount?</span>
+        <a href="#" class="text-decoration-none fw-bold text-info">Login</a>
+      </div>
+    </div>
+  </body>
+
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="registration.js"></script>
+</html>
