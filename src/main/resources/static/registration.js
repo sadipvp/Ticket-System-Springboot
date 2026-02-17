@@ -1,78 +1,77 @@
-// 1. Esperamos a que el HTML esté completamente cargado
 $(document).ready(function() {
 
-    // 2. Detectamos cuando alguien hace clic en el botón con ID "btn-registrar"
+    // Detectamos clic en el botón Registrar
     $('#btn-registrar').on('click', function(event) {
-        
-        // Evitamos que el botón intente enviar un formulario tradicional y recargue la página
-        event.preventDefault();
+        event.preventDefault(); // Evitar recarga de página
 
-        // 3. CAPTURA DE DATOS (El Robot agarra lo que escribió el usuario)
+        // 1. CAPTURA DE DATOS
         var nombre      = $('#nombre').val();
         var apellidos   = $('#apellidos').val();
         var email       = $('#email').val();
         var pass1       = $('#contraseña').val();
         var pass2       = $('#contraseña_repetida').val();
+        var terminos    = $('#recordarme').is(':checked');
 
-        // --- VALIDACIONES FRONTEND (Antes de molestar al servidor) ---
-        
-        // A. Validar que no estén vacíos
+        // 2. VALIDACIONES
         if (nombre === "" || apellidos === "" || email === "" || pass1 === "") {
             alert("Por favor, completa todos los campos.");
-            return; // Detiene la ejecución, no sigue bajando
+            return;
         }
 
-        // B. Validar que las contraseñas coincidan
         if (pass1 !== pass2) {
             alert("Las contraseñas no coinciden.");
             return;
         }
 
-        // 4. PREPARAR EL PAQUETE (JSON)
-        // Tu Backend espera: username, name, email.
-        // Como tu formulario tiene Nombre y Apellido separados, los unimos.
-        
-        // Truco: Usaremos la parte antes del @ del email como "username" (UID)
+        if (!terminos) {
+            alert("Debes aceptar los términos y condiciones.");
+            return;
+        }
+
+        // 3. GENERAR USERNAME AUTOMÁTICO (Todo lo antes del @)
+        // Ejemplo: juan.perez@email.com -> juan.perez
         var usuarioGenerado = email.split('@')[0]; 
 
+        // 4. CREAR OBJETO JSON
         var objetoParaEnviar = {
-            username: usuarioGenerado,       // ej: juan.perez
-            name: nombre + " " + apellidos,  // ej: Juan Perez
-            email: email,                    // ej: juan.perez@test.com
-            // Nota: No enviamos la password porque estamos en modo "Simulación LDAP"
-            // y las contraseñas reales no se guardan en esta tabla por ahora.
+            username: usuarioGenerado,
+            name: nombre + " " + apellidos,
+            email: email
+            // password: pass1 // Descomenta si tu Backend ya guarda contraseñas reales
         };
 
-        console.log("Enviando datos:", objetoParaEnviar); // Para que lo veas en la consola F12
-
-        // 5. EL MENSAJERO (AJAX)
-        // Ajax permite hablar con Java sin recargar la página
+        // 5. ENVIAR AL BACKEND (AJAX)
         $.ajax({
-            url: '/api/users/register',      // A dónde voy
-            type: 'POST',                    // Qué voy a hacer (Enviar/Crear)
-            contentType: 'application/json', // En qué idioma hablo (JSON)
-            data: JSON.stringify(objetoParaEnviar), // Convertimos el objeto JS a Texto JSON
+            url: '/api/users/register',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(objetoParaEnviar),
             
-            // Si todo sale BIEN (Código 200 OK)
             success: function(respuesta) {
-                console.log("Servidor respondió:", respuesta);
-                alert("¡Registro Exitoso! Tu usuario es: " + usuarioGenerado + "\nLa contraseña por defecto es '123'");
-                window.location.href = "/login.html"; // Redirigir al login
+                // EXITO: No usamos alert(). Usamos el Modal bonito.
+                
+                // A. Ponemos el usuario en el texto del modal
+                $('#modal-username-display').text(usuarioGenerado);
+                
+                // B. Mostramos el modal
+                var myModal = new bootstrap.Modal(document.getElementById('successModal'));
+                myModal.show();
             },
             
-            // Si algo sale MAL (Error 400, 500, etc)
             error: function(xhr) {
-                console.error("Error:", xhr);
+                // ERROR: Si el usuario ya existe o falla el servidor
                 var mensajeError = "Ocurrió un error desconocido";
-                
-                // Intentamos leer el mensaje que mandó Java
                 if (xhr.responseJSON && xhr.responseJSON.message) {
                     mensajeError = xhr.responseJSON.message;
                 }
-                
                 alert("Error: " + mensajeError);
             }
         });
-
     });
+
+    // 6. Botón dentro del Modal para ir al Login
+    $('#btn-go-login').click(function() {
+        window.location.href = "/login.html";
+    });
+
 });
